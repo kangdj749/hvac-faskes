@@ -58,13 +58,24 @@ function RegistrasiHVAC() {
     mode: "onBlur",
   })
 
-  // Simpan UTM tracking (Google Ads)
+  // Ambil fundriser dari URL atau localStorage → simpan bersih
+  
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const utm = window.location.search
-      setValue("utm", utm || "Direct")
-    }
-  }, [setValue])
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  const raw = url.searchParams.get("fundriser");
+
+  if (raw) {
+    // Simpan bersih (tanpa "?fundriser=")
+    localStorage.setItem("fundriser", raw);
+    setValue("utm", raw);
+  } else {
+    // Jika sudah ada dari sebelumnya
+    const stored = localStorage.getItem("fundriser") || "";
+    if (stored) setValue("utm", stored);
+  }
+  }, [setValue]);
 
   const handleSubmitForm: SubmitHandler<FormValues> = async (data) => {
     if (submitting) return

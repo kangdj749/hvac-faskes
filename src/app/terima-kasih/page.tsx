@@ -1,46 +1,79 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ClipboardCheck, MessageCircle } from "lucide-react";
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { fbq } from "@/lib/metaPixel";
+import { Phone, Building2, User } from "lucide-react";
 
-export default function KonfirmasiHVAC() {
+export default function ThankYouWrapper() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Loading...</div>}>
+      <ThankYouPage />
+    </Suspense>
+  );
+}
+
+function ThankYouPage() {
   const params = useSearchParams();
   const data = Object.fromEntries(params.entries());
-
+  const [fundriser, setFundriser] = useState("");
+  const [hasTracked, setHasTracked] = useState(false);
   const WA_ADMIN = "6281333301601";
 
-  const message = `
-Halo Admin HVAC 👋,
-Ada permintaan layanan baru masuk.
-
-Nama PIC: ${data.nama}
-Jabatan: ${data.jabatan}
-Fasilitas: ${data.klinik}
-No HP: ${data.nohp}
-Alamat: ${data.alamat}
-Kebutuhan: ${data.kebutuhan}
-Jumlah AC: ${data.jumlahAC || "-"}
-Catatan: ${data.catatan || "-"}
-UTM: ${data.utm || "Direct"}
-
-Mohon segera ditindaklanjuti ya 🙏
-`;
-
-  // === AUTO SEND WA ADMIN ===
+  // ---------------------------------------------
+  // 🔥 Ambil fundriser dari localStorage (no query)
+  // ---------------------------------------------
   useEffect(() => {
-    if (!data || Object.keys(data).length === 0) return;
+    if (typeof window === "undefined") return;
 
-    const timer = setTimeout(() => {
-      window.open(
-        `https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    }, 1000);
+    const stored = localStorage.getItem("fundriser") || "direct";
+    setFundriser(stored);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [data]);
+  // ---------------------------------------------
+  // 🔥 FB Pixel (Lead)
+  // ---------------------------------------------
+  useEffect(() => {
+    if (!fundriser) return;
+    if (hasTracked) return;
+
+    fbq("track", "Lead", {
+      layanan: data.kebutuhan || "HVAC",
+      fundriser,
+    });
+
+    console.log("🔥 FB Pixel Lead Fired", {
+      layanan: data.kebutuhan,
+      fundriser,
+    });
+
+    setHasTracked(true);
+  }, [fundriser, hasTracked, data]);
+
+  // ---------------------------------------------
+  // 🔥 WhatsApp Message
+  // ---------------------------------------------
+  const msg = `
+Halo Admin HVAC 👋
+
+Saya sudah mengisi form permintaan layanan HVAC untuk fasilitas kesehatan.
+
+Berikut datanya:
+• Nama PIC: ${data.nama}
+• Jabatan: ${data.jabatan}
+• Klinik/Faskes: ${data.klinik}
+• No HP: ${data.nohp}
+• Alamat Lokasi: ${data.alamat}
+• Kebutuhan: ${data.kebutuhan}
+• Jumlah AC: ${data.jumlahAC || "-"}
+• Catatan: ${data.catatan || "-"}
+
+Fundriser: ${fundriser}
+
+Mohon dibantu untuk penjadwalan survey ya. Terima kasih 🙏
+`;
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center px-4 py-16">
@@ -48,47 +81,62 @@ Mohon segera ditindaklanjuti ya 🙏
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-lg w-full bg-white rounded-3xl shadow-lg border border-green-100 p-8 text-center"
+        className="bg-white w-full max-w-lg p-10 rounded-3xl shadow-xl border border-green-100"
       >
-        <div className="mx-auto w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-          <ClipboardCheck size={40} />
-        </div>
-
-        <h1 className="text-3xl font-bold text-green-700 mb-3">
-          Terima Kasih, {data.nama || "PIC"}! 🎉
+        {/* Heading */}
+        <h1 className="text-3xl font-bold text-green-700 text-center mb-3">
+          Terima Kasih! 🎉
         </h1>
-
-        <p className="text-gray-600 leading-relaxed mb-8">
-          Permintaan layanan HVAC Anda sudah kami terima.
-          <br />
-          Tim kami akan menghubungi Anda dalam{" "}
-          <span className="font-semibold text-green-700">5–10 menit</span>.
+        <p className="text-gray-600 text-center mb-8 leading-relaxed">
+          Permintaan layanan HVAC Anda telah kami terima.  
+          Tim kami akan menghubungi Anda dalam <b>5–10 menit</b> untuk konfirmasi dan penjadwalan survey lokasi.
         </p>
 
-        <div className="text-left bg-green-50 p-6 rounded-2xl border border-green-100 shadow-sm mb-8">
-          <h2 className="font-semibold text-green-700 text-lg mb-3">
-            Ringkasan Permintaan
+        {/* Summary */}
+        <div className="bg-green-50 border border-green-200 p-6 rounded-2xl mb-8">
+          <h2 className="text-lg font-semibold text-green-700 mb-4">
+            Ringkasan Data Anda
           </h2>
 
-          <ul className="space-y-2 text-gray-700 text-sm">
-            <li><b>Nama PIC:</b> {data.nama}</li>
-            <li><b>Jabatan:</b> {data.jabatan}</li>
-            <li><b>Klinik:</b> {data.klinik}</li>
-            <li><b>No HP:</b> {data.nohp}</li>
-            <li><b>Alamat:</b> {data.alamat}</li>
-            <li><b>Kebutuhan:</b> {data.kebutuhan}</li>
-            <li><b>Jumlah AC:</b> {data.jumlahAC || "-"}</li>
-            <li><b>Catatan:</b> {data.catatan || "-"}</li>
-          </ul>
+          <div className="space-y-3 text-sm text-gray-700">
+            <div className="flex gap-3">
+              <User className="text-green-600" size={18} />
+              <span><b>{data.nama}</b> — {data.jabatan}</span>
+            </div>
+
+            <div className="flex gap-3">
+              <Building2 className="text-green-600" size={18} />
+              <span>{data.klinik}</span>
+            </div>
+
+            <div className="flex gap-3">
+              <Phone className="text-green-600" size={18} />
+              <span>{data.nohp}</span>
+            </div>
+
+            <p className="mt-2 text-xs text-gray-500">
+              Fundriser: <b className="text-green-700">{fundriser}</b>
+            </p>
+          </div>
         </div>
 
-        <a
-          href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(message)}`}
-          target="_blank"
-          className="inline-flex gap-2 items-center justify-center bg-green-600 text-white px-6 py-3 rounded-xl font-semibold text-lg hover:bg-green-700 transition w-full shadow-md"
+        {/* CTA */}
+        <Button
+          size="lg"
+          className="w-full py-4 text-base font-semibold rounded-xl bg-green-600 text-white hover:bg-green-700"
+          onClick={() =>
+            window.open(
+              `https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(msg)}`,
+              "_blank"
+            )
+          }
         >
-          <MessageCircle size={22} /> Hubungi Admin via WhatsApp
-        </a>
+          Hubungi Admin via WhatsApp
+        </Button>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          Layanan khusus untuk Klinik, Puskesmas, Apotek, dan Fasilitas Kesehatan.
+        </p>
       </motion.div>
     </section>
   );

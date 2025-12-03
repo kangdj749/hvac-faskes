@@ -29,7 +29,7 @@ export default function Hero() {
     <section className="relative flex items-center justify-center w-full min-h-[90vh] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 -z-10">
-        <Image
+        {/*<Image
           src="/hvac-klinik-hero.webp"
           alt="Layanan HVAC Klinik dan Fasilitas Kesehatan"
           fill
@@ -37,7 +37,7 @@ export default function Hero() {
           quality={90}
           className="object-cover object-center"
           sizes="100vw"
-        />
+        />*/}
         <div className="absolute inset-0 bg-gradient-to-b from-green-900/70 via-green-800/50 to-green-900/80" />
       </div>
 
