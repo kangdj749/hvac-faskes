@@ -16,6 +16,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
+      <head>
+        {/* ✅ Meta Domain Verification (WAJIB DI SINI) */}
+        <meta
+          name="facebook-domain-verification"
+          content="dg4yauxrekwr2fn9ck8fkuvcc79jpz"
+        />
+      </head>
       <body>
         <MetaPixel />
         {children}
